@@ -11,6 +11,58 @@
   }
 })();
 "use strict";
+const { fetchSyncPost } = require("siyuan");
+async function request(url, data) {
+  let response = await fetchSyncPost(url, data);
+  let res = response.code === 0 ? response.data : null;
+  return res;
+}
+async function upload(assetsDirPath, files) {
+  let form = new FormData();
+  form.append("assetsDirPath", assetsDirPath);
+  for (let file of files) {
+    form.append("file[]", file);
+  }
+  let url = "/api/asset/upload";
+  return request(url, form);
+}
+async function appendBlock(dataType, data, parentID) {
+  let payload = {
+    dataType,
+    data,
+    parentID
+  };
+  let url = "/api/block/appendBlock";
+  return request(url, payload);
+}
+function chatTTS(...arg) {
+  const [apiURL, data] = arg.length == 2 ? [arg[0], arg[1]] : ["http://127.0.0.1:9966/tts", arg[0]];
+  const par = Object.assign(
+    {
+      text: "",
+      prompt: "",
+      voice: 2222,
+      speed: 4,
+      temperature: 0.3,
+      top_p: 0.7,
+      top_k: 20,
+      refine_max_new_token: 384,
+      infer_max_new_token: 2048,
+      text_seed: 42,
+      skip_refine: 1,
+      custom_voice: 324256
+    },
+    data
+  );
+  const from = new FormData();
+  Object.entries(par).forEach(([key, value]) => {
+    from.append(key, String(value));
+  });
+  return fetch(apiURL, {
+    body: from,
+    method: "POST"
+  }).then((r) => r.json());
+}
 const { Plugin } = require("siyuan");
 class VitePlugin extends Plugin {
   async onLayoutReady() {
@@ -28,6 +80,42 @@ class VitePlugin extends Plugin {
       (_a = el.querySelector(`[data-type="pin"]`)) == null ? void 0 : _a.click();
       await Promise.resolve().then(() => require("./view_block-Dyvby5gX.cjs"));
     }
+    this.eventBus.on("click-blockicon", (event) => {
+      window.siyuan.menus.menu.addItem({
+        label: "转音频",
+        icon: ``,
+        click: () => {
+          const el = event.detail.blockElements[0];
+          const id = el.dataset.nodeId;
+          const text = el.textContent;
+          this.tts(id, text);
+        }
+      });
+    });
+  }
+  async tts(id, text) {
+    const res = await chatTTS({
+      text
+    });
+    const res2 = await fetch(res.audio_files[0].url).then((response) => response.blob()).then((blob) => {
+      return upload("/assets/", [
+        new File(
+          [blob],
+          `${Date.now()}-${Math.random().toString(36).slice(2)}.${res.audio_files[0].url.split(".").pop()}`
+        )
+      ]);
+    });
+    console.log("[res2]", res2);
+    const assets = Object.entries(res2.succMap);
+    await Promise.all(
+      assets.map(([_, assertName]) => {
+        return appendBlock(
+          "markdown",
+          `<audio controls="controls" src="${assertName}" data-src="${assertName}"></audio>`,
+          id
+        );
+      })
+    );
   }
 }
 module.exports = VitePlugin;
