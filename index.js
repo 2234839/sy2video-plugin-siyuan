@@ -3,7 +3,7 @@
   try {
     if (typeof document != "undefined") {
       var elementStyle = document.createElement("style");
-      elementStyle.appendChild(document.createTextNode("body > * {\r\n  visibility: hidden;\r\n}\r\n.block__popover .protyle-content {\r\n  position: fixed;\r\n  top: 0px;\r\n  left: 0px;\r\n  visibility: visible;\r\n}"));
+      elementStyle.appendChild(document.createTextNode("body.sy2video-plugin-siyuan > * {\r\n  visibility: hidden;\r\n}\r\n.sy2video-plugin-siyuan .block__popover .protyle-content {\r\n  position: fixed;\r\n  top: 0px;\r\n  left: 0px;\r\n  visibility: visible;\r\n}"));
       document.head.appendChild(elementStyle);
     }
   } catch (e) {
@@ -11,6 +11,9 @@
   }
 })();
 "use strict";
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 const { fetchSyncPost } = require("siyuan");
 async function request(url, data) {
   let response = await fetchSyncPost(url, data);
@@ -64,7 +67,12 @@ function chatTTS(...arg) {
   }).then((r) => r.json());
 }
 const { Plugin } = require("siyuan");
-class VitePlugin extends Plugin {
+const classFlag = `sy2video-plugin-siyuan`;
+class sy2video extends Plugin {
+  constructor() {
+    super(...arguments);
+    __publicField(this, "onunloadFn", []);
+  }
   async onLayoutReady() {
     var _a;
     const urlParams = new URLSearchParams(window.location.search);
@@ -78,7 +86,11 @@ class VitePlugin extends Plugin {
       });
       const el = window.siyuan.blockPanels[0].element;
       (_a = el.querySelector(`[data-type="pin"]`)) == null ? void 0 : _a.click();
-      await Promise.resolve().then(() => require("./view_block-Dyvby5gX.cjs"));
+      console.log(block_show, blockId);
+      document.body.classList.add(classFlag);
+      this.onunloadFn.push(() => {
+        document.body.classList.remove(classFlag);
+      });
     }
     this.eventBus.on("click-blockicon", (event) => {
       window.siyuan.menus.menu.addItem({
@@ -116,6 +128,9 @@ class VitePlugin extends Plugin {
       })
     );
   }
+  onunload() {
+    this.onunloadFn.forEach((fn) => fn());
+  }
 }
-module.exports = VitePlugin;
+module.exports = sy2video;
 //# sourceMappingURL=index.js.map
