@@ -3,7 +3,7 @@
   try {
     if (typeof document != "undefined") {
       var elementStyle = document.createElement("style");
-      elementStyle.appendChild(document.createTextNode("body.sy2video-plugin-siyuan > * {\r\n  visibility: hidden;\r\n}\r\n.sy2video-plugin-siyuan .block__popover .protyle-content {\r\n  position: fixed;\r\n  top: 0px;\r\n  left: 0px;\r\n  visibility: visible;\r\n}"));
+      elementStyle.appendChild(document.createTextNode("body.sy2video-plugin-siyuan > * {\r\n  visibility: hidden;\r\n}\r\n.sy2video-plugin-siyuan .block__popover .protyle-content {\r\n  position: fixed;\r\n  top: 0px;\r\n  left: 0px;\r\n  transform-origin: top left; /* 设置缩放的基点 */\r\n  transform: scale(var(--scale-factor));\r\n  visibility: visible;\r\n  overflow: visible;\r\n}"));
       document.head.appendChild(elementStyle);
     }
   } catch (e) {
@@ -86,6 +86,12 @@ class sy2video extends Plugin {
       });
       const el = window.siyuan.blockPanels[0].element;
       (_a = el.querySelector(`[data-type="pin"]`)) == null ? void 0 : _a.click();
+      setTimeout(() => {
+        const contentEL = el.querySelector(`.protyle-content`);
+        const rate = window.innerHeight / contentEL.getBoundingClientRect().height;
+        console.log("[rate]", rate);
+        contentEL.style.setProperty("--scale-factor", String(rate));
+      }, 1e3);
       document.body.classList.add(classFlag);
       this.onunloadFn.push(() => {
         document.body.classList.remove(classFlag);
