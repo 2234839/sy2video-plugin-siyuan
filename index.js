@@ -44,16 +44,16 @@ function chatTTS(...arg) {
     {
       text: "",
       prompt: "",
-      voice: 2222,
-      speed: 4,
+      voice: "11.csv",
+      speed: 5,
       temperature: 0.3,
       top_p: 0.7,
       top_k: 20,
       refine_max_new_token: 384,
       infer_max_new_token: 2048,
       text_seed: 42,
-      skip_refine: 1,
-      custom_voice: 324256
+      skip_refine: 0,
+      custom_voice: 0
     },
     data
   );
@@ -67,36 +67,47 @@ function chatTTS(...arg) {
   }).then((r) => r.json());
 }
 const { Plugin } = require("siyuan");
-const classFlag = `sy2video-plugin-siyuan`;
-class sy2video extends Plugin {
+class SiyuanPlugin extends Plugin {
   constructor() {
     super(...arguments);
     __publicField(this, "onunloadFn", []);
   }
+  // 在 unload 时执行注册的函数
+  addUnloadFn(fn) {
+    this.onunloadFn.push(fn);
+  }
+  onunload() {
+    this.onunloadFn.forEach((fn) => fn());
+  }
+}
+const classFlag = `sy2video-plugin-siyuan`;
+class sy2video extends SiyuanPlugin {
   async onLayoutReady() {
     var _a;
-    const urlParams = new URLSearchParams(window.location.search);
-    const blockId = urlParams.getAll("block_id");
-    const block_show = urlParams.get("block_show");
-    if (block_show && blockId) {
-      this.addFloatLayer({
-        x: 0,
-        y: 0,
-        ids: [...blockId]
-      });
-      const el = window.siyuan.blockPanels[0].element;
-      (_a = el.querySelector(`[data-type="pin"]`)) == null ? void 0 : _a.click();
-      setTimeout(() => {
-        const contentEL = el.querySelector(`.protyle-content`);
-        const rate_w = window.innerWidth / contentEL.getBoundingClientRect().width;
-        const rate_h = window.innerHeight / contentEL.getBoundingClientRect().height;
-        const rate = rate_h < rate_w ? rate_h : rate_w;
-        contentEL.style.setProperty("--scale-factor", String(rate));
-      }, 1e3);
-      document.body.classList.add(classFlag);
-      this.onunloadFn.push(() => {
-        document.body.classList.remove(classFlag);
-      });
+    {
+      const urlParams = new URLSearchParams(window.location.search);
+      const blockId = urlParams.getAll("block_id");
+      const block_show = urlParams.get("block_show");
+      if (block_show && blockId) {
+        this.addFloatLayer({
+          x: 0,
+          y: 0,
+          ids: [...blockId]
+        });
+        const el = window.siyuan.blockPanels[0].element;
+        (_a = el.querySelector(`[data-type="pin"]`)) == null ? void 0 : _a.click();
+        setTimeout(() => {
+          const contentEL = el.querySelector(`.protyle-content`);
+          const rate_w = window.innerWidth / contentEL.getBoundingClientRect().width;
+          const rate_h = window.innerHeight / contentEL.getBoundingClientRect().height;
+          const rate = rate_h < rate_w ? rate_h : rate_w;
+          contentEL.style.setProperty("--scale-factor", String(rate));
+        }, 5e3);
+        document.body.classList.add(classFlag);
+        this.onunloadFn.push(() => {
+          document.body.classList.remove(classFlag);
+        });
+      }
     }
     this.eventBus.on("click-blockicon", (event) => {
       window.siyuan.menus.menu.addItem({
@@ -133,9 +144,6 @@ class sy2video extends Plugin {
         );
       })
     );
-  }
-  onunload() {
-    this.onunloadFn.forEach((fn) => fn());
   }
 }
 module.exports = sy2video;
